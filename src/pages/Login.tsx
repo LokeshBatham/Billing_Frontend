@@ -3,7 +3,11 @@ import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { loginSuccess } from '../slices/authSlice'
 import { useNavigate } from 'react-router-dom'
 import type { User } from '../types'
-import { login as loginApi, ApiError } from '../api/api'
+import { login as loginApi, register as registerApi, ApiError } from '../api/api'
+import { toast } from '../utils/toast'
+import { isValidEmail, normalizeEmail, isValidContact, extractDigits, isValidPassword } from '../utils/validators'
+import INDIA_STATES from '../data/indiaStates'
+import INDIA_CITIES from '../data/indiaCities'
 
 
 const roleMap: Record<string, User['role']> = {
@@ -19,8 +23,18 @@ const Login: React.FC = () => {
     const [captchaAnswer, setCaptchaAnswer] = useState<number>(0)
     const [captchaInput, setCaptchaInput] = useState('')
     const [captchaError, setCaptchaError] = useState<string | null>(null)
+    const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+    // register fields
+    const [regName, setRegName] = useState('')
+    const [regContact, setRegContact] = useState('')
+    const [regCompany, setRegCompany] = useState('')
+    const [regState, setRegState] = useState('')
+    const [regCity, setRegCity] = useState('')
+    const [regPassword, setRegPassword] = useState('')
     const [apiError, setApiError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showRegPassword, setShowRegPassword] = useState(false)
     const dispatch = useAppDispatch()
     const nav = useNavigate()
     const user = useAppSelector(s => s.auth.user)
@@ -46,6 +60,16 @@ const Login: React.FC = () => {
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault()
+        // validate email and password before proceeding
+        const emailVal = normalizeEmail(email)
+        if (!isValidEmail(emailVal)) {
+            setApiError('Please enter a valid email address')
+            return
+        }
+        if (!isValidPassword(password)) {
+            setApiError('Password must have at least one uppercase letter, one number, one special character and be > 6 characters')
+            return
+        }
         if (Number(captchaInput) !== captchaAnswer) {
             setCaptchaError('Captcha answer is incorrect. Please try again.')
             generateCaptcha()
@@ -55,7 +79,7 @@ const Login: React.FC = () => {
         setApiError(null)
         setLoading(true)
         try {
-            const response = await loginApi({ email, password })
+            const response = await loginApi({ email: emailVal, password })
             if (!response || typeof response !== 'object' || !response.user || !response.token) {
                 throw new Error('Invalid server response')
             }
@@ -136,12 +160,29 @@ const Login: React.FC = () => {
                                     </p>
                                 </div>
                                 <div className="text-center mb-4">
-                                    <h4 className="fw-bold mb-1">Sign in to your account</h4>
-                                    <p className="text-muted mb-0">
-                                        Use your admin credentials to continue.
-                                    </p>
+                                    <div className="d-flex justify-content-center mb-3">
+                                        <div className="btn-group" role="group" aria-label="auth toggle">
+                                            <button
+                                                type="button"
+                                                className={"btn " + (mode === 'signin' ? 'btn-primary' : 'btn-outline-primary')}
+                                                onClick={() => setMode('signin')}
+                                            >
+                                                Sign In
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={"btn " + (mode === 'signup' ? 'btn-primary' : 'btn-outline-primary')}
+                                                onClick={() => setMode('signup')}
+                                            >
+                                                Sign Up
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <h4 className="fw-bold mb-1">{mode === 'signin' ? 'Sign in to your account' : 'Create a new account'}</h4>
+                                    <p className="text-muted mb-0">{mode === 'signin' ? 'Use your admin credentials to continue.' : 'Enter details to create your account.'}</p>
                                 </div>
-                                <form onSubmit={submit} className="auth-form">
+                                {mode === 'signin' ? (
+                                    <form onSubmit={submit} className="auth-form">
                                     <div className="mb-3">
                                         <label className="form-label fw-semibold text-dark">Email address</label>
                                         <div className="input-group auth-input-group">
@@ -167,7 +208,7 @@ const Login: React.FC = () => {
                                             </span>
                                             <input
                                                 className="form-control auth-input"
-                                                type="password"
+                                                type={showPassword ? 'text' : 'password'}
                                                 value={password}
                                                 onChange={e => setPassword(e.target.value)}
                                                 placeholder="••••••••"
@@ -175,6 +216,9 @@ const Login: React.FC = () => {
                                                 minLength={6}
                                                 autoComplete="current-password"
                                             />
+                                            <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword(s => !s)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                                                <i className={showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'}></i>
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="mb-3">
@@ -210,17 +254,131 @@ const Login: React.FC = () => {
                                             {apiError}
                                         </div>
                                     )}
-                                    <button className="btn btn-primary w-100 auth-submit" disabled={loading}>
-                                        {loading ? (
-                                            <span className="d-inline-flex align-items-center gap-2">
-                                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                Logging in...
-                                            </span>
-                                        ) : (
-                                            'Log in securely'
+                                        <button className="btn btn-primary w-100 auth-submit" disabled={loading}>
+                                            {loading ? (
+                                                <span className="d-inline-flex align-items-center gap-2">
+                                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                    Logging in...
+                                                </span>
+                                            ) : (
+                                                'Log in securely'
+                                            )}
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <form
+                                        onSubmit={async (e) => {
+                                            e.preventDefault()
+                                            setApiError(null)
+                                            setLoading(true)
+                                            try {
+                                                const regEmailVal = normalizeEmail(email)
+                                                if (!isValidEmail(regEmailVal)) {
+                                                    setApiError('Please enter a valid email address')
+                                                    return
+                                                }
+                                                if (!isValidContact(regContact)) {
+                                                    setApiError('Contact must be exactly 10 digits')
+                                                    return
+                                                }
+                                                if (!isValidPassword(regPassword)) {
+                                                    setApiError('Password must have at least one uppercase letter, one number, one special character and be > 6 characters')
+                                                    return
+                                                }
+
+                                                await registerApi({
+                                                    name: regName,
+                                                    contact: extractDigits(regContact),
+                                                    email: regEmailVal,
+                                                    companyName: regCompany,
+                                                    state: regState,
+                                                    city: regCity,
+                                                    password: regPassword,
+                                                })
+                                                toast.success('Registered successfully. You can sign in now.')
+                                                // reset register fields
+                                                setRegName('')
+                                                setRegContact('')
+                                                setRegCompany('')
+                                                setRegState('')
+                                                setRegCity('')
+                                                setRegPassword('')
+                                                setMode('signin')
+                                            } catch (err: any) {
+                                                const message = err?.message || err?.error || 'Registration failed'
+                                                setApiError(message)
+                                            } finally {
+                                                setLoading(false)
+                                            }
+                                        }}
+                                        className="auth-form"
+                                    >
+                                        <div className="form-floating mb-3">
+                                            <input id="regName" className="form-control" placeholder="Full name" value={regName} onChange={e => setRegName(e.target.value)} required />
+                                            <label htmlFor="regName">Full name</label>
+                                        </div>
+
+                                        <div className="form-floating mb-3">
+                                            <input id="regContact" className="form-control" placeholder="Contact" value={regContact} onChange={e => setRegContact(e.target.value)} required />
+                                            <label htmlFor="regContact">Contact</label>
+                                        </div>
+
+                                        <div className="form-floating mb-3">
+                                            <input id="regEmail" className="form-control" placeholder="you@example.com" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                                            <label htmlFor="regEmail">Email address</label>
+                                        </div>
+
+                                        <div className="form-floating mb-3">
+                                            <input id="regCompany" className="form-control" placeholder="Company name" value={regCompany} onChange={e => setRegCompany(e.target.value)} />
+                                            <label htmlFor="regCompany">Company name</label>
+                                        </div>
+
+                                        <div className="row">
+                                                <div className="col mb-3">
+                                                    <div className="form-floating">
+                                                        <select id="regState" className="form-select" value={regState} onChange={e => setRegState(e.target.value)}>
+                                                            <option value="">Select state</option>
+                                                            {INDIA_STATES.map(s => (
+                                                                <option key={s.code} value={s.name}>{s.name}</option>
+                                                            ))}
+                                                        </select>
+                                                        <label htmlFor="regState">State</label>
+                                                    </div>
+                                                </div>
+                                            <div className="col mb-3">
+                                                <div className="form-floating">
+                                                    <select id="regCity" className="form-select" value={regCity} onChange={e => setRegCity(e.target.value)} disabled={!regState}>
+                                                        <option value="">{regState ? 'Select city' : 'Select state first'}</option>
+                                                        {(INDIA_CITIES[regState] || []).map(c => (
+                                                            <option key={c} value={c}>{c}</option>
+                                                        ))}
+                                                    </select>
+                                                    <label htmlFor="regCity">City</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="form-floating mb-3">
+                                            <div className="password-wrapper">
+                                                <input id="regPassword" className="form-control" type={showRegPassword ? 'text' : 'password'} placeholder="Password" value={regPassword} onChange={e => setRegPassword(e.target.value)} minLength={6} />
+                                                <label htmlFor="regPassword">Password (min 6 chars)</label>
+                                                <button type="button" className="password-toggle" onClick={() => setShowRegPassword(s => !s)} aria-label={showRegPassword ? 'Hide password' : 'Show password'}>
+                                                    <i className={showRegPassword ? 'bi bi-eye-slash' : 'bi bi-eye'}></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {apiError && (
+                                            <div className="alert alert-danger py-2 px-3 auth-alert" role="alert">
+                                                <i className="bi bi-exclamation-octagon me-2"></i>
+                                                {apiError}
+                                            </div>
                                         )}
-                                    </button>
-                                </form>
+                                        <div className="d-flex gap-2">
+                                            <button className="btn btn-primary w-100" type="submit" disabled={loading}>{loading ? 'Registering...' : 'Register'}</button>
+                                        </div>
+                                    </form>
+                                )}
                                 <div className="mt-4 text-center auth-footnote">
                                     <small className="text-muted">
                                         By logging in you agree to our{' '}

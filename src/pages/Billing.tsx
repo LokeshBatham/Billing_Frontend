@@ -353,27 +353,21 @@ const Billing: React.FC = () => {
 
     let orderId: string | undefined;
     try {
-      const response = await fetch("/api/payments/create-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const { default: axios } = await import('axios');
+      const { data } = await axios.post('/api/payments/create-order', {
+        amount: amountInPaise,
+        currency: 'INR',
+        receipt: `receipt_${Date.now()}`,
+        notes: {
+          customer: selectedCustomer?.id ?? 'guest',
+          items: cart.items.length,
         },
-        body: JSON.stringify({
-          amount: amountInPaise,
-          currency: "INR",
-          receipt: `receipt_${Date.now()}`,
-          notes: {
-            customer: selectedCustomer?.id ?? "guest",
-            items: cart.items.length,
-          },
-        }),
+      }, {
+        headers: { 'Content-Type': 'application/json' },
       });
-      if (response.ok) {
-        const data = await response.json();
-        orderId = data?.id || data?.orderId;
-      }
+      orderId = data?.id || data?.orderId;
     } catch (error) {
-      console.warn("Unable to create Razorpay order from API.", error);
+      console.warn('Unable to create Razorpay order from API.', error);
     }
 
     const paymentOptions = {

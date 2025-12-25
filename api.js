@@ -1,14 +1,24 @@
 // @ts-check
-
-const DEFAULT_BASE_URL = 'https://billing-backend-mocha.vercel.app';
+import axios from 'axios';
 
 const resolveBaseUrl = () => {
+  console.log('import.meta.env:', import.meta);
+console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
   // @ts-ignore - import.meta.env is available in Vite
-  const envUrl = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_API_URL : undefined;
+  const metaEnv = typeof import.meta !== 'undefined' ? import.meta.env : undefined;
+  const envUrl = metaEnv?.VITE_API_URL;
+
   if (typeof envUrl === 'string' && envUrl.trim()) {
     return envUrl.replace(/\/+$/, '');
   }
-  return DEFAULT_BASE_URL;
+
+  // Do not use a hardcoded default. Require VITE_API_URL to be set.
+  // If it's not set, return empty string so relative paths are used (same-origin).
+  // Log an explicit warning to help debugging.
+  // Note: Consumers should set VITE_API_URL for explicit backend host.
+  // eslint-disable-next-line no-console
+  console.error('[API] VITE_API_URL is not set. API requests will use relative paths. Set VITE_API_URL in your environment.');
+  return '';
 };
 
 const API_BASE_URL = resolveBaseUrl();
@@ -27,23 +37,7 @@ class ApiError extends Error {
   }
 }
 
-/**
- * @param {Response} response
- */
-const parseResponse = async (response) => {
-  if (response.status === 204) {
-    return null;
-  }
-
-  const text = await response.text();
-  if (!text) return null;
-
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    throw new ApiError('Failed to parse server response', response.status, { raw: text, error });
-  }
-};
+// axios will parse JSON responses automatically
 
 /**
  * @param {string} path
@@ -60,33 +54,38 @@ const makeUrl = (path) => {
  * @param {{ token?: string; body?: any; method?: string; headers?: HeadersInit; [key: string]: any }} options
  */
 const request = async (path, options = {}) => {
-  const { token, body, headers, ...rest } = options;
+  const { token, body, headers = {}, method = 'GET', ...rest } = options;
 
-  const finalHeaders = new Headers(headers || {});
-  if (body !== undefined && body !== null && !finalHeaders.has('Content-Type')) {
-    finalHeaders.set('Content-Type', 'application/json');
+  const finalHeaders = {
+    ...headers,
+  };
+
+  if (body !== undefined && body !== null && !finalHeaders['Content-Type']) {
+    finalHeaders['Content-Type'] = 'application/json';
   }
   if (token) {
-    finalHeaders.set('Authorization', `Bearer ${token}`);
+    finalHeaders['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(makeUrl(path), {
-    ...rest,
-    headers: finalHeaders,
-    body: body !== undefined && body !== null ? JSON.stringify(body) : undefined,
-  });
-
-  const payload = await parseResponse(response);
-
-  if (!response.ok) {
-    const message =
-      typeof payload?.error === 'string'
-        ? payload.error
-        : `Request failed with status ${response.status}`;
-    throw new ApiError(message, response.status, payload);
+  try {
+    const axiosConfig = {
+      url: makeUrl(path),
+      method: method.toLowerCase(),
+      headers: finalHeaders,
+      data: body !== undefined && body !== null ? body : undefined,
+      ...rest,
+    };
+    const response = await axios.request(axiosConfig);
+    return response.data !== undefined ? response.data : null;
+  } catch (err) {
+    if (err.response) {
+      const status = err.response.status;
+      const payload = err.response.data;
+      const message = typeof payload?.error === 'string' ? payload.error : err.message || `Request failed with status ${status}`;
+      throw new ApiError(message, status, payload);
+    }
+    throw new ApiError(err.message || 'Network request failed', 0, { originalError: err });
   }
-
-  return payload;
 };
 
 /**
@@ -95,6 +94,9 @@ const request = async (path, options = {}) => {
 export const login = async (credentials) => {
   const email = String(credentials.email || '').trim();
   const password = String(credentials.password || '');
+
+   console.log('import.meta.env:', import.meta.env);
+console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
 
   if (!email) {
     throw new ApiError('Email is required', 400);

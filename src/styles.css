@@ -398,6 +398,32 @@
   color: rgba(26, 43, 89, 0.6);
 }
 
+/* Inline password toggle inside inputs */
+.password-wrapper {
+  position: relative;
+}
+.password-wrapper .password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0.25rem;
+  color: rgba(0,0,0,0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.password-wrapper .password-toggle:focus {
+  outline: none;
+  box-shadow: none;
+}
+.password-wrapper input {
+  padding-right: 2.5rem;
+}
+
+
 .info-value {
   font-size: 1.1rem;
   font-weight: 600;

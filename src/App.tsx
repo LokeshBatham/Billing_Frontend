@@ -26,6 +26,10 @@ const App: React.FC = () => {
   const location = useLocation();
   const isLoginPage = location.pathname === '/';
 
+  console.log('MODE:', import.meta);
+console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+
+
   return (
     <SidebarContext.Provider value={{ sidebarClass, setSidebarClass }}>
       <div className="d-flex flex-column" style={{ minHeight: '100vh' }}>

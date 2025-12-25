@@ -1,28 +1,55 @@
 // @ts-check
+import axios from 'axios';
 
 const resolveBaseUrl = () => {
+  // Try Vite's import.meta.env first
   // @ts-ignore - import.meta.env is available in Vite
   const metaEnv = typeof import.meta !== 'undefined' ? import.meta.env : undefined;
   // @ts-ignore
-  const envUrl = metaEnv?.VITE_API_URL;
+  const viteUrl = metaEnv?.VITE_API_URL;
   // @ts-ignore
   const mode = metaEnv?.MODE || 'development';
-  
-  if (typeof envUrl === 'string' && envUrl.trim()) {
-    const baseUrl = envUrl.trim().replace(/\/+$/, '');
-    // Log in development mode for debugging
-    if (mode === 'development') {
-      console.log(`[API] Using ${mode} environment: ${baseUrl}`);
-    }
+
+  if (typeof viteUrl === 'string' && viteUrl.trim()) {
+    const baseUrl = viteUrl.trim().replace(/\/+$/, '');
+    if (mode === 'development') console.log(`[API] Using ${mode} environment (import.meta.env): ${baseUrl}`);
     return baseUrl;
   }
-  
-  // Fallback to default if env variable is not set
-  const DEFAULT_BASE_URL = 'https://billing-backend-wje7.onrender.com';
-  if (mode === 'development') {
-    console.warn(`[API] VITE_API_URL not found, using default: ${DEFAULT_BASE_URL}`);
+
+  // Fallbacks for environments where import.meta.env isn't available
+  // 1) process.env (useful in some dev servers or tests)
+  try {
+    // @ts-ignore
+    const proc = typeof process !== 'undefined' ? process.env : undefined;
+    const procUrl = proc?.VITE_API_URL || proc?.REACT_APP_API_URL || proc?.API_URL;
+    if (typeof procUrl === 'string' && procUrl.trim()) {
+      const baseUrl = procUrl.trim().replace(/\/+$/, '');
+      console.log(`[API] Using environment from process.env: ${baseUrl}`);
+      return baseUrl;
+    }
+  } catch (e) {
+    // ignore
   }
-  return DEFAULT_BASE_URL;
+
+  // 2) A runtime-injected global (useful for docker/static hosting) e.g. window.__APP_CONFIG = { VITE_API_URL: '...' }
+  try {
+    // @ts-ignore
+    const runtime = typeof window !== 'undefined' ? window.__APP_CONFIG : undefined;
+    const runtimeUrl = runtime?.VITE_API_URL || runtime?.API_URL;
+    if (typeof runtimeUrl === 'string' && runtimeUrl.trim()) {
+      const baseUrl = runtimeUrl.trim().replace(/\/+$/, '');
+      console.log(`[API] Using runtime-injected config: ${baseUrl}`);
+      return baseUrl;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Final fallback: no env found. Log clear guidance and return empty string to use relative URLs.
+  if (mode === 'development') {
+    console.error('[API] VITE_API_URL not found in import.meta.env, process.env, or window.__APP_CONFIG. API requests will use relative paths. Set VITE_API_URL in Billing_Frontend/.env.development or export VITE_API_URL before starting the dev server.');
+  }
+  return '';
 };
 
 const API_BASE_URL = resolveBaseUrl();
@@ -41,23 +68,7 @@ class ApiError extends Error {
   }
 }
 
-/**
- * @param {Response} response
- */
-const parseResponse = async (response) => {
-  if (response.status === 204) {
-    return null;
-  }
-
-  const text = await response.text();
-  if (!text) return null;
-
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    throw new ApiError('Failed to parse server response', response.status, { raw: text, error });
-  }
-};
+// Using axios responses, parsing is handled by axios (response.data)
 
 /**
  * @param {string} path
@@ -74,33 +85,44 @@ const makeUrl = (path) => {
  * @param {{ token?: string; body?: any; method?: string; headers?: HeadersInit; [key: string]: any }} options
  */
 const request = async (path, options = {}) => {
-  const { token, body, headers, ...rest } = options;
+  const { token, body, headers = {}, method = 'GET', ...rest } = options;
 
-  const finalHeaders = new Headers(headers || {});
-  if (body !== undefined && body !== null && !finalHeaders.has('Content-Type')) {
-    finalHeaders.set('Content-Type', 'application/json');
+  const finalHeaders = {
+    ...headers,
+  };
+
+  if (body !== undefined && body !== null && !finalHeaders['Content-Type']) {
+    finalHeaders['Content-Type'] = 'application/json';
   }
   if (token) {
-    finalHeaders.set('Authorization', `Bearer ${token}`);
+    finalHeaders['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(makeUrl(path), {
-    ...rest,
-    headers: finalHeaders,
-    body: body !== undefined && body !== null ? JSON.stringify(body) : undefined,
-  });
+  try {
+    const axiosConfig = {
+      url: makeUrl(path),
+      method: method.toLowerCase(),
+      headers: finalHeaders,
+      data: body !== undefined && body !== null ? body : undefined,
+      // allow callers to pass axios-specific options via rest (e.g., params)
+      ...rest,
+    };
 
-  const payload = await parseResponse(response);
+    const response = await axios.request(axiosConfig);
 
-  if (!response.ok) {
-    const message =
-      typeof payload?.error === 'string'
-        ? payload.error
-        : `Request failed with status ${response.status}`;
-    throw new ApiError(message, response.status, payload);
+    const payload = response && response.data !== undefined ? response.data : null;
+
+    return payload;
+  } catch (err) {
+    // Normalize axios error
+    if (err.response) {
+      const status = err.response.status;
+      const payload = err.response.data;
+      const message = typeof payload?.error === 'string' ? payload.error : err.message || `Request failed with status ${status}`;
+      throw new ApiError(message, status, payload);
+    }
+    throw new ApiError(err.message || 'Network request failed', 0, { originalError: err });
   }
-
-  return payload;
 };
 
 /**
@@ -130,6 +152,19 @@ export const login = async (credentials) => {
     },
   });
 };
+
+/**
+ * @param {{ name: string; contact: string; email: string; companyName?: string; state?: string; city?: string; password?: string }} payload
+ */
+export const register = async (payload) => {
+  const email = String(payload.email || '').trim();
+  if (!email) throw new ApiError('Email is required', 400);
+  return request('/api/auth/register', {
+    method: 'POST',
+    body: payload,
+  });
+};
+
 
 /**
  * @param {{ token?: string; [key: string]: any }} [options]
