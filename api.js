@@ -2,8 +2,6 @@
 import axios from 'axios';
 
 const resolveBaseUrl = () => {
-  console.log('import.meta.env:', import.meta);
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
   // @ts-ignore - import.meta.env is available in Vite
   const metaEnv = typeof import.meta !== 'undefined' ? import.meta.env : undefined;
   const envUrl = metaEnv?.VITE_API_URL;
@@ -95,9 +93,6 @@ export const login = async (credentials) => {
   const email = String(credentials.email || '').trim();
   const password = String(credentials.password || '');
 
-   console.log('import.meta.env:', import.meta.env);
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-
   if (!email) {
     throw new ApiError('Email is required', 400);
   }
@@ -164,6 +159,15 @@ export const deleteProduct = async (id, options) => {
     ...(options || {}),
   });
   return { id };
+};
+
+/**
+ * @param {string} barcode
+ */
+export const getProductByBarcode = async (barcode) => {
+  return request(`/api/products/barcode/${barcode}`, {
+    method: 'GET',
+  });
 };
 
 export { ApiError };

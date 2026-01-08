@@ -28,8 +28,10 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/billing', label: 'Billing', Icon: Cart4 },
   { to: '/customers', label: 'Customers', Icon: People },
   { to: '/reports', label: 'Reports', Icon: GraphUp },
+  { to: '/settings', label: 'Settings', Icon: Gear },
   { to: '/admin', label: 'Admin', Icon: Gear },
 ];
+
 
 const Sidebar: React.FC<{ onSidebarClassChange?: (c: string) => void }> = ({ onSidebarClassChange }) => {
   const [collapsed] = useState(true);

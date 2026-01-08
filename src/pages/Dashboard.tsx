@@ -41,6 +41,7 @@ const Dashboard: React.FC = () => {
   const [hasApiError, setHasApiError] = useState(false);
   const sales = useAppSelector((s) => s.reports.sales) ?? [];
   const products = useAppSelector((s) => s.products.items) ?? [];
+  const token = useAppSelector((s) => s.auth.token) || undefined;
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -50,7 +51,7 @@ const Dashboard: React.FC = () => {
       setError(null);
       setHasApiError(false);
       console.log('[Dashboard] Fetching dashboard data from API...');
-      const data = await getDashboard();
+      const data = await getDashboard({ token });
       console.log('[Dashboard] Data received:', data);
       
       // Validate API response

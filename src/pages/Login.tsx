@@ -17,6 +17,7 @@ const roleMap: Record<string, User['role']> = {
 }
 
 const Login: React.FC = () => {
+    const [companyName, setCompanyName] = useState('')
     const [email, setEmail] = useState('admin@example.com')
     const [password, setPassword] = useState('Admin@123')
     const [captchaQuestion, setCaptchaQuestion] = useState<string>('')
@@ -60,6 +61,11 @@ const Login: React.FC = () => {
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault()
+        const companyVal = String(companyName || '').trim()
+        if (!companyVal) {
+            setApiError('Company name is required')
+            return
+        }
         // validate email and password before proceeding
         const emailVal = normalizeEmail(email)
         if (!isValidEmail(emailVal)) {
@@ -79,7 +85,7 @@ const Login: React.FC = () => {
         setApiError(null)
         setLoading(true)
         try {
-            const response = await loginApi({ email: emailVal, password })
+            const response = await loginApi({ companyName: companyVal, email: emailVal, password })
             if (!response || typeof response !== 'object' || !response.user || !response.token) {
                 throw new Error('Invalid server response')
             }
@@ -183,6 +189,23 @@ const Login: React.FC = () => {
                                 </div>
                                 {mode === 'signin' ? (
                                     <form onSubmit={submit} className="auth-form">
+                                    <div className="mb-3">
+                                        <label className="form-label fw-semibold text-dark">Company name</label>
+                                        <div className="input-group auth-input-group">
+                                            <span className="input-group-text">
+                                                <i className="bi bi-building"></i>
+                                            </span>
+                                            <input
+                                                className="form-control auth-input"
+                                                value={companyName}
+                                                onChange={e => setCompanyName(e.target.value)}
+                                                placeholder="Your company"
+                                                type="text"
+                                                required
+                                                autoComplete="organization"
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="mb-3">
                                         <label className="form-label fw-semibold text-dark">Email address</label>
                                         <div className="input-group auth-input-group">

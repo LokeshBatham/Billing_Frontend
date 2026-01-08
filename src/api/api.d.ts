@@ -18,6 +18,7 @@ export interface LoginResponse {
 }
 
 export declare function login(credentials: {
+  companyName: string;
   email: string;
   password: string;
 }): Promise<LoginResponse>;
@@ -107,3 +108,7 @@ export declare function getSalesReport(
   options?: RequestInit & { token?: string },
 ): Promise<Invoice[]>;
 
+export declare function getProductByBarcode(
+  barcode: string,
+  options?: RequestInit & { token?: string },
+): Promise<Product | null>;

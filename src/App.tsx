@@ -1,73 +1,105 @@
-import React from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { ToastContainer } from "./utils/toast";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Products from "./pages/Products";
-import Customers from "./pages/Customers";
-import CustomerForm from "./pages/CustomerForm";
-import Billing from "./pages/Billing";
-import Invoice from "./pages/Invoice";
-import Reports from "./pages/Reports";
-import Admin from "./pages/Admin";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { useState } from "react";
-import ProtectedRoute from "./components/ProtectedRoute";
-import ProductForm from "./pages/ProductForm";
+import PageLoader from "./components/PageLoader";
 
+/* =======================
+   LAZY LOADED PAGES
+======================= */
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Products = lazy(() => import("./pages/Products"));
+const ProductForm = lazy(() => import("./pages/ProductForm"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CustomerForm = lazy(() => import("./pages/CustomerForm"));
+const Billing = lazy(() => import("./pages/Billing"));
+const Invoice = lazy(() => import("./pages/Invoice"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Admin = lazy(() => import("./pages/Admin"));
 
-// Sidebar context to sync collapsed/hovered state
-const SidebarContext = React.createContext<{ sidebarClass: string; setSidebarClass: (c: string) => void }>({ sidebarClass: '', setSidebarClass: () => {} });
+/* =======================
+   SIDEBAR CONTEXT
+======================= */
+type SidebarContextType = {
+  sidebarClass: string;
+  setSidebarClass: (c: string) => void;
+};
+
+export const SidebarContext = React.createContext<SidebarContextType>({
+  sidebarClass: "",
+  setSidebarClass: () => {},
+});
 
 const App: React.FC = () => {
-  const [sidebarClass, setSidebarClass] = useState('collapsed');
+  const [sidebarClass, setSidebarClass] = useState("collapsed");
   const location = useLocation();
-  const isLoginPage = location.pathname === '/';
+  const isLoginPage = location.pathname === "/";
 
-  console.log('MODE:', import.meta);
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-
+  console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
 
   return (
     <SidebarContext.Provider value={{ sidebarClass, setSidebarClass }}>
-      <div className="d-flex flex-column" style={{ minHeight: '100vh' }}>
+      <div className="d-flex flex-column" style={{ minHeight: "100vh" }}>
         {!isLoginPage && <Header />}
+
         <div className="d-flex flex-grow-1">
           {!isLoginPage && <SidebarWithContext />}
-          <div className={`flex-grow-1 d-flex flex-column ${!isLoginPage ? `content-with-sidebar${sidebarClass === 'collapsed' ? ' collapsed' : ''}` : ''}`}>
+
+          <div
+            className={`flex-grow-1 d-flex flex-column ${
+              !isLoginPage
+                ? `content-with-sidebar${
+                    sidebarClass === "collapsed" ? " collapsed" : ""
+                  }`
+                : ""
+            }`}
+          >
             <div className="flex-grow-1">
-              <Routes>
-                <Route path="/" element={<Login />} />
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/new" element={<ProductForm />} />
-                  <Route path="/products/edit/:id" element={<ProductForm />} />
-                  <Route path="/customers" element={<Customers />} />
-                  <Route path="/customers/new" element={<CustomerForm />} />
-                  <Route path="/customers/edit/:id" element={<CustomerForm />} />
-                  <Route path="/billing" element={<Billing />} />
-                  <Route path="/invoice/:id" element={<Invoice />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/admin" element={<Admin />} />
-                </Route>
-              </Routes>
+              {/* =======================
+                 ROUTES WITH SUSPENSE
+              ======================= */}
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Login />} />
+
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/products/new" element={<ProductForm />} />
+                    <Route path="/products/edit/:id" element={<ProductForm />} />
+
+                    <Route path="/customers" element={<Customers />} />
+                    <Route path="/customers/new" element={<CustomerForm />} />
+                    <Route
+                      path="/customers/edit/:id"
+                      element={<CustomerForm />}
+                    />
+
+                    <Route path="/billing" element={<Billing />} />
+                    <Route path="/invoice/:id" element={<Invoice />} />
+
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/admin" element={<Admin />} />
+                  </Route>
+                </Routes>
+              </Suspense>
             </div>
+
             {!isLoginPage && <Footer />}
           </div>
         </div>
       </div>
+
       <ToastContainer
         position="top-right"
         autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
         pauseOnHover
         theme="light"
       />
@@ -75,7 +107,9 @@ console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
   );
 };
 
-// Sidebar wrapper to sync state with context
+/* =======================
+   SIDEBAR WRAPPER
+======================= */
 const SidebarWithContext: React.FC = () => {
   const { setSidebarClass } = React.useContext(SidebarContext);
   return <Sidebar onSidebarClassChange={setSidebarClass} />;

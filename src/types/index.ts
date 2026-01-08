@@ -15,6 +15,7 @@ id: string
 name: string
 sku?: string
 barcode?: string
+barcodeImage?: string
 price: number
 mrp?: number
 discountPrice?: number

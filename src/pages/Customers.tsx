@@ -12,6 +12,7 @@ const placeholder = "—";
 const Customers: React.FC = () => {
   const dispatch = useAppDispatch();
   const customers = useAppSelector((s) => s.customers.items ?? []);
+  const token = useAppSelector((s) => s.auth.token) || undefined;
 
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -28,13 +29,13 @@ const Customers: React.FC = () => {
       setLoadingCustomers(true);
       setApiError(null);
       setHasApiError(false);
-      const data = await getCustomers();
-      
+      const data = await getCustomers({ token });
+
       // Validate API response
       if (!data || !Array.isArray(data)) {
         throw new Error('Invalid API response format');
       }
-      
+
       dispatch(setCustomers(data || []));
       setHasApiError(false);
     } catch (error) {
@@ -114,22 +115,22 @@ const Customers: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    
+
     try {
       setLoading(true);
-      const customerData = { 
+      const customerData = {
         name: capitalizeFirst(form.name.trim()),
         phone: form.phone.trim() || undefined,
         email: form.email.trim() || undefined,
       };
-      
+
       if (editingCustomer) {
         // Update customer via API
-        const updated = await updateCustomerAPI(editingCustomer.id, customerData);
+        const updated = await updateCustomerAPI(editingCustomer.id, customerData, { token });
         dispatch(updateCustomer(updated));
       } else {
         // Create customer via API
-        const created = await createCustomer(customerData);
+        const created = await createCustomer(customerData, { token });
         dispatch(addCustomer(created));
       }
       handleCloseModal();
@@ -163,7 +164,7 @@ const Customers: React.FC = () => {
 
     try {
       setLoading(true);
-      await deleteCustomer(id);
+      await deleteCustomer(id, { token });
       dispatch(removeCustomer(id));
     } catch (error) {
       console.error('[Customers] Failed to delete customer:', error);

@@ -1,6 +1,7 @@
 import * as toolkit from '@reduxjs/toolkit';
 const { createSlice, createAsyncThunk } = toolkit;
 import type { Product } from '../types';
+import type { RootState } from '../store/store';
 import {
   getProducts,
   createProduct as createProductApi,
@@ -25,9 +26,10 @@ const initialState: ProductsState = {
 
 export const fetchProducts = createAsyncThunk<Product[]>(
   'products/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
-      const products = await getProducts();
+      const token = (getState() as RootState).auth.token || undefined;
+      const products = await getProducts({ token });
       return products;
     } catch (error) {
       if (error instanceof ApiError) {
@@ -40,9 +42,10 @@ export const fetchProducts = createAsyncThunk<Product[]>(
 
 export const addProduct = createAsyncThunk<Product, DiscountCompatibleProduct>(
   'products/add',
-  async (payload, { rejectWithValue }) => {
+  async (payload, { rejectWithValue, getState }) => {
     try {
-      const created = await createProductApi(payload);
+      const token = (getState() as RootState).auth.token || undefined;
+      const created = await createProductApi(payload, { token });
       return created;
     } catch (error) {
       if (error instanceof ApiError) {
@@ -58,9 +61,10 @@ export const updateProduct = createAsyncThunk<
   { id: string; data: Partial<DiscountCompatibleProduct> }
 >(
   'products/update',
-  async ({ id, data }, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue, getState }) => {
     try {
-      const updated = await updateProductApi(id, data);
+      const token = (getState() as RootState).auth.token || undefined;
+      const updated = await updateProductApi(id, data, { token });
       return updated;
     } catch (error) {
       if (error instanceof ApiError) {
@@ -73,9 +77,10 @@ export const updateProduct = createAsyncThunk<
 
 export const removeProduct = createAsyncThunk<string, string>(
   'products/remove',
-  async (id, { rejectWithValue }) => {
+  async (id, { rejectWithValue, getState }) => {
     try {
-      await deleteProductApi(id);
+      const token = (getState() as RootState).auth.token || undefined;
+      await deleteProductApi(id, { token });
       return id;
     } catch (error) {
       if (error instanceof ApiError) {

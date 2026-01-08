@@ -15,7 +15,7 @@ import { setCustomers } from "../slices/customersSlice";
 import { useAppSelector } from "../store/hooks";
 import type { RootState } from "../store/store";
 import type { Customer, Product, Invoice } from "../types";
-import { getCustomers, createCustomer, ApiError } from "../api/api";
+import { getCustomers, createCustomer, getProductByBarcode, ApiError } from "../api/api";
 import ApiErrorFallback from "../components/ApiErrorFallback";
 
 interface RazorpayOptions {
@@ -59,7 +59,11 @@ const Billing: React.FC = () => {
   const cart = useSelector((state: RootState) => state.cart);
   const products = useSelector((state: RootState) => state.products.items);
   const customers = useAppSelector((state: RootState) => state.customers.items);
+  const token = useAppSelector((state: RootState) => state.auth.token) || undefined;
   const [search, setSearch] = useState("");
+  const [barcodeInput, setBarcodeInput] = useState("");
+  const [barcodeLoading, setBarcodeLoading] = useState(false);
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [modalMode, setModalMode] = useState<'select' | 'create'>("select");
@@ -83,7 +87,7 @@ const Billing: React.FC = () => {
       setLoadingCustomers(true);
       setCustomerApiError(null);
       setHasCustomerApiError(false);
-      const data = await getCustomers();
+      const data = await getCustomers({ token });
       
       // Validate API response
       if (!data || !Array.isArray(data)) {
@@ -121,7 +125,7 @@ const Billing: React.FC = () => {
     const searchCustomers = async () => {
       try {
         setLoadingCustomers(true);
-        const data = await getCustomers({ search: modalSearch });
+        const data = await getCustomers({ token, search: modalSearch });
         setApiCustomers(data || []);
       } catch (error) {
         console.error('[Billing] Failed to search customers:', error);
@@ -275,6 +279,38 @@ const Billing: React.FC = () => {
         taxPercent: Number(product.taxRate || product.taxPercent) || 0,
       })
     );
+  };
+
+  const handleBarcodeSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const barcode = barcodeInput.trim();
+    if (!barcode) return;
+
+    setBarcodeLoading(true);
+    setBarcodeError(null);
+
+    try {
+      const product = await getProductByBarcode(barcode, { token });
+      if (product) {
+        addProductToCart(product);
+        toast.success(`Added ${product.name} to cart`);
+        setBarcodeInput("");
+      } else {
+        setBarcodeError("Product not found");
+        toast.error("No product found with this barcode");
+      }
+    } catch (error) {
+      console.error('[Billing] Barcode search error:', error);
+      if (error instanceof ApiError) {
+        setBarcodeError(error.message);
+        toast.error(error.message);
+      } else {
+        setBarcodeError("Failed to search product");
+        toast.error("Failed to search product by barcode");
+      }
+    } finally {
+      setBarcodeLoading(false);
+    }
   };
 
   const updateItemQty = (itemId: string, qty: number) => {
@@ -534,9 +570,46 @@ const Billing: React.FC = () => {
               </span>
             </div>
             <div className="card-body d-flex flex-column">
+              {/* Barcode Scanner Input */}
+              <form onSubmit={handleBarcodeSearch} className="mb-3">
+                <div className="input-group">
+                  <span className="input-group-text bg-primary text-white">
+                    <i className="bi bi-upc-scan"></i>
+                  </span>
+                  <input
+                    className={`form-control glow-control ${barcodeError ? 'is-invalid' : ''}`}
+                    placeholder="Scan or enter barcode..."
+                    value={barcodeInput}
+                    onChange={(e) => {
+                      setBarcodeInput(e.target.value);
+                      setBarcodeError(null);
+                    }}
+                    disabled={barcodeLoading}
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={barcodeLoading || !barcodeInput.trim()}
+                  >
+                    {barcodeLoading ? (
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    ) : (
+                      <i className="bi bi-search"></i>
+                    )}
+                  </button>
+                </div>
+                {barcodeError && (
+                  <div className="text-danger small mt-1">
+                    <i className="bi bi-exclamation-circle me-1"></i>
+                    {barcodeError}
+                  </div>
+                )}
+              </form>
+
               <input
                 className="form-control glow-control mb-3"
-                placeholder="Search or scan SKU"
+                placeholder="Search by name or SKU"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -548,7 +621,8 @@ const Billing: React.FC = () => {
                   .filter(
                     (p) =>
                       p.name.toLowerCase().includes(search.toLowerCase()) ||
-                      p.sku?.toLowerCase().includes(search.toLowerCase())
+                      p.sku?.toLowerCase().includes(search.toLowerCase()) ||
+                      p.barcode?.toLowerCase().includes(search.toLowerCase())
                   )
                   .map((p, index) => {
                     const variantInfo = p.parentProductId
@@ -1141,7 +1215,7 @@ const Billing: React.FC = () => {
                     name: trimmedName,
                     email: trimmedEmail || undefined,
                     phone: trimmedPhone || undefined,
-                  });
+                  }, { token });
                   
                   // Update local state and Redux
                   setApiCustomers([...apiCustomers, newCustomer]);
