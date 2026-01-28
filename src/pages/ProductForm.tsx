@@ -1,36 +1,35 @@
-
-import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addProduct, updateProduct } from '../slices/productsSlice';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ApiError } from '../api/api';
+import React, { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { addProduct, updateProduct } from "../slices/productsSlice";
+import { useNavigate, useParams } from "react-router-dom";
+import { ApiError } from "../api/api";
 
 const initialForm = {
-  name: '',
-  category: '',
-  sku: '',
-  unit: '',
-  purchasePrice: '',
-  sellingPrice: '',
-  taxRate: '',
-  stock: '',
-  reorderLevel: '',
-  barcode: '',
-  brand: '',
-  hsn: '',
-  discount: '',
-  discountType: 'percentage' as 'percentage' | 'flat',
-  supplier: '',
-  batch: '',
-  expiry: '',
-  mfg: '',
-  image: '',
-  description: '',
-  location: '',
-  weight: '',
-  color: '',
-  size: '',
-  status: 'active',
+  name: "",
+  category: "",
+  sku: "",
+  unit: "",
+  purchasePrice: "",
+  sellingPrice: "",
+  taxRate: "",
+  stock: "",
+  reorderLevel: "",
+  barcode: "",
+  brand: "",
+  hsn: "",
+  discount: "",
+  discountType: "percentage" as "percentage" | "flat",
+  supplier: "",
+  batch: "",
+  expiry: "",
+  mfg: "",
+  image: "",
+  description: "",
+  location: "",
+  weight: "",
+  color: "",
+  size: "",
+  status: "active",
   isFavorite: false,
   isBestSeller: false,
 };
@@ -46,53 +45,67 @@ const ProductForm: React.FC = () => {
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isVariant, setIsVariant] = useState(false);
-  const [parentProductId, setParentProductId] = useState('');
-  const [parentProductSearch, setParentProductSearch] = useState('');
+  const [parentProductId, setParentProductId] = useState("");
+  const [parentProductSearch, setParentProductSearch] = useState("");
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [barcodePreview, setBarcodePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (existing) {
       setIsVariant(Boolean(existing.parentProductId));
-      setParentProductId(existing.parentProductId || '');
-      const parent = existing.parentProductId ? products.find((p) => p.id === existing.parentProductId) : null;
+      setParentProductId(existing.parentProductId || "");
+      const parent = existing.parentProductId
+        ? products.find((p) => p.id === existing.parentProductId)
+        : null;
       setParentProductSearch(parent?.name || existing.name);
       setForm({
-        name: existing.name || '',
-        category: existing.category || '',
-        sku: existing.sku || '',
-        unit: existing.unit || '',
-        purchasePrice: existing.purchasePrice?.toString() || existing.mrp?.toString() || '',
-        sellingPrice: existing.sellingPrice?.toString() || existing.price?.toString() || '',
-        taxRate: existing.taxRate?.toString() || existing.taxPercent?.toString() || '',
-        stock: existing.stock?.toString() || '',
-        reorderLevel: '',
-        barcode: existing.barcode || '',
-        brand: existing.brand || '',
-        hsn: existing.hsn || '',
+        name: existing.name || "",
+        category: existing.category || "",
+        sku: existing.sku || "",
+        unit: existing.unit || "",
+        purchasePrice:
+          existing.purchasePrice?.toString() || existing.mrp?.toString() || "",
+        sellingPrice:
+          existing.sellingPrice?.toString() || existing.price?.toString() || "",
+        taxRate:
+          existing.taxRate?.toString() || existing.taxPercent?.toString() || "",
+        stock: existing.stock?.toString() || "",
+        reorderLevel: "",
+        barcode: existing.barcode || "",
+        brand: existing.brand || "",
+        hsn: existing.hsn || "",
         discount: (() => {
-          if (existing.discountType === 'flat') {
-            return existing.discountAmount?.toString() || existing.discountValue?.toString() || '';
+          if (existing.discountType === "flat") {
+            return (
+              existing.discountAmount?.toString() ||
+              existing.discountValue?.toString() ||
+              ""
+            );
           }
           return (
             existing.discount?.toString() ||
             existing.discountPrice?.toString() ||
             existing.discountValue?.toString() ||
-            ''
+            ""
           );
         })(),
-        discountType: existing.discountType || (existing.discount || existing.discountPrice ? 'percentage' : 'percentage'),
-        supplier: '',
-        batch: '',
-        expiry: '',
-        mfg: existing.mfg || '',
-        image: existing.image || '',
-        description: existing.description || '',
-        location: existing.location || '',
-        weight: existing.weight || '',
-        color: existing.color || '',
-        size: existing.size || '',
-        status: existing.status || 'active',
+        discountType:
+          existing.discountType ||
+          (existing.discount || existing.discountPrice
+            ? "percentage"
+            : "percentage"),
+        supplier: "",
+        batch: "",
+        expiry: "",
+        mfg: existing.mfg || "",
+        image: existing.image || "",
+        description: existing.description || "",
+        location: existing.location || "",
+        weight: existing.weight || "",
+        color: existing.color || "",
+        size: existing.size || "",
+        status: existing.status || "active",
         isFavorite: existing.isFavorite || false,
         isBestSeller: existing.isBestSeller || false,
       });
@@ -107,16 +120,19 @@ const ProductForm: React.FC = () => {
   );
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value, type, files, checked } = e.target as any;
     setForm((f) => {
-      const nextValue = type === 'file' ? files[0] : type === 'checkbox' ? checked : value;
-      if (name === 'discountType') {
+      const nextValue =
+        type === "file" ? files[0] : type === "checkbox" ? checked : value;
+      if (name === "discountType") {
         return {
           ...f,
-          discountType: nextValue as 'percentage' | 'flat',
-          discount: '',
+          discountType: nextValue as "percentage" | "flat",
+          discount: "",
         };
       }
       return {
@@ -124,7 +140,7 @@ const ProductForm: React.FC = () => {
         [name]: nextValue,
       };
     });
-    if (name === 'discountType') {
+    if (name === "discountType") {
       setErrors((prev) => {
         const { discount: _removed, ...rest } = prev;
         return rest;
@@ -140,59 +156,67 @@ const ProductForm: React.FC = () => {
       setForm((f) => ({
         ...f,
         name: parent.name,
-        category: parent.category || '',
-        brand: parent.brand || '',
-        hsn: parent.hsn || '',
-        unit: parent.unit || '',
+        category: parent.category || "",
+        brand: parent.brand || "",
+        hsn: parent.hsn || "",
+        unit: parent.unit || "",
         discountType:
           parent.discountType ||
-          (parent.discount || parent.discountPrice ? 'percentage' : parent.discountAmount ? 'flat' : f.discountType),
+          (parent.discount || parent.discountPrice
+            ? "percentage"
+            : parent.discountAmount
+            ? "flat"
+            : f.discountType),
         discount: (() => {
-          if (parent.discountType === 'flat') {
-            return parent.discountAmount?.toString() || parent.discountValue?.toString() || '';
+          if (parent.discountType === "flat") {
+            return (
+              parent.discountAmount?.toString() ||
+              parent.discountValue?.toString() ||
+              ""
+            );
           }
           if (parent.discount || parent.discountPrice || parent.discountValue) {
             return (
               parent.discount?.toString() ||
               parent.discountPrice?.toString() ||
               parent.discountValue?.toString() ||
-              ''
+              ""
             );
           }
-          return '';
+          return "";
         })(),
       }));
     }
   };
 
   const required: Array<keyof typeof initialForm> = [
-    'name',
-    'sku',
-    'category',
-    'unit',
-    'purchasePrice',
-    'sellingPrice',
-    'taxRate',
-    'stock',
+    "name",
+    "sku",
+    "category",
+    "unit",
+    "purchasePrice",
+    "sellingPrice",
+    "taxRate",
+    "stock",
   ];
 
   const validate = () => {
     const errs: { [key: string]: string } = {};
     required.forEach((field) => {
       const value = form[field];
-      if (!value || (typeof value === 'string' && !value.trim())) {
-        errs[field] = 'Required';
+      if (!value || (typeof value === "string" && !value.trim())) {
+        errs[field] = "Required";
       }
     });
     if (isVariant && !parentProductId) {
-      errs.parentProduct = 'Please select a parent product';
+      errs.parentProduct = "Please select a parent product";
     }
     if (form.discount) {
       const discountValue = Number(form.discount);
       if (Number.isNaN(discountValue) || discountValue < 0) {
-        errs.discount = 'Enter a valid discount';
-      } else if (form.discountType === 'percentage' && discountValue > 100) {
-        errs.discount = 'Percentage discount cannot exceed 100';
+        errs.discount = "Enter a valid discount";
+      } else if (form.discountType === "percentage" && discountValue > 100) {
+        errs.discount = "Percentage discount cannot exceed 100";
       }
     }
     setErrors(errs);
@@ -203,7 +227,9 @@ const ProductForm: React.FC = () => {
     e.preventDefault();
     if (!validate() || submitting) return;
     if (editing && !existing) {
-      setApiError('Product details are still loading. Please try again in a moment.');
+      setApiError(
+        "Product details are still loading. Please try again in a moment."
+      );
       return;
     }
 
@@ -212,7 +238,7 @@ const ProductForm: React.FC = () => {
       submitProduct(imageUrl)
         .then(() => {
           setSubmitting(false);
-          navigate('/products');
+          navigate("/products");
         })
         .catch(() => {
           setSubmitting(false);
@@ -222,7 +248,7 @@ const ProductForm: React.FC = () => {
 
     setApiError(null);
 
-    if (imageValue && typeof imageValue !== 'string') {
+    if (imageValue && typeof imageValue !== "string") {
       const file = imageValue as unknown as File;
       if (file instanceof File) {
         setSubmitting(true);
@@ -234,7 +260,7 @@ const ProductForm: React.FC = () => {
           processSubmission(reader.result as string);
         };
         reader.onerror = () => {
-          setApiError('Failed to read image file. Please try again.');
+          setApiError("Failed to read image file. Please try again.");
           setSubmitting(false);
         };
         reader.readAsDataURL(file);
@@ -256,12 +282,21 @@ const ProductForm: React.FC = () => {
       price: Number(form.sellingPrice) || 0,
       sellingPrice: Number(form.sellingPrice) || 0,
       mrp: form.purchasePrice ? Number(form.purchasePrice) : undefined,
-      purchasePrice: form.purchasePrice ? Number(form.purchasePrice) : undefined,
-      discount: form.discount && form.discountType === 'percentage' ? Number(form.discount) : undefined,
+      purchasePrice: form.purchasePrice
+        ? Number(form.purchasePrice)
+        : undefined,
+      discount:
+        form.discount && form.discountType === "percentage"
+          ? Number(form.discount)
+          : undefined,
       discountPrice:
-        form.discount && form.discountType === 'percentage' ? Number(form.discount) : undefined,
+        form.discount && form.discountType === "percentage"
+          ? Number(form.discount)
+          : undefined,
       discountAmount:
-        form.discount && form.discountType === 'flat' ? Number(form.discount) : undefined,
+        form.discount && form.discountType === "flat"
+          ? Number(form.discount)
+          : undefined,
       discountValue: form.discount ? Number(form.discount) : undefined,
       discountType: form.discount ? form.discountType : undefined,
       taxPercent: form.taxRate ? Number(form.taxRate) : undefined,
@@ -278,12 +313,12 @@ const ProductForm: React.FC = () => {
       image:
         imageUrl !== undefined
           ? imageUrl
-          : typeof form.image === 'string'
+          : typeof form.image === "string"
           ? form.image
           : undefined,
       location: form.location.trim() || undefined,
       description: form.description.trim() || undefined,
-      status: form.status as 'active' | 'inactive',
+      status: form.status as "active" | "inactive",
       parentProductId: isVariant ? parentProductId : undefined,
       isFavorite: Boolean(form.isFavorite),
       isBestSeller: Boolean(form.isBestSeller),
@@ -291,19 +326,21 @@ const ProductForm: React.FC = () => {
 
     try {
       if (editing && existing) {
-        await dispatch(updateProduct({ id: existing.id, data: productData })).unwrap();
+        await dispatch(
+          updateProduct({ id: existing.id, data: productData })
+        ).unwrap();
       } else {
         await dispatch(addProduct(productData)).unwrap();
       }
     } catch (error) {
       if (error instanceof ApiError) {
         setApiError(error.message);
-      } else if (typeof error === 'string') {
+      } else if (typeof error === "string") {
         setApiError(error);
       } else if (error instanceof Error) {
-        setApiError(error.message || 'Failed to save product');
+        setApiError(error.message || "Failed to save product");
       } else {
-        setApiError('Failed to save product');
+        setApiError("Failed to save product");
       }
       throw error;
     }
@@ -311,11 +348,11 @@ const ProductForm: React.FC = () => {
 
   const pageTitle = editing
     ? isVariant
-      ? 'Edit Product Variant'
-      : 'Edit Product'
+      ? "Edit Product Variant"
+      : "Edit Product"
     : isVariant
-    ? 'Add Product Variant'
-    : 'Add Product';
+    ? "Add Product Variant"
+    : "Add Product";
 
   return (
     <div className="products-page themed-page py-3 px-2">
@@ -327,31 +364,54 @@ const ProductForm: React.FC = () => {
               {pageTitle}
             </h3>
             <p className="mb-0 text-white-50">
-              Organize your catalog with quick variant creation, enriched product details, and smart highlights.
+              Organize your catalog with quick variant creation, enriched
+              product details, and smart highlights.
             </p>
           </div>
           <div className="d-flex flex-wrap gap-3 justify-content-start">
-            <div className="stat-chip surface-chip animate-slide-up" style={{ animationDelay: '80ms' }}>
+            <div
+              className="stat-chip surface-chip animate-slide-up"
+              style={{ animationDelay: "80ms" }}
+            >
               <span className="chip-label">Mode</span>
-              <span className="chip-value text-primary">{editing ? 'Editing' : 'Creating'}</span>
+              <span className="chip-value text-primary">
+                {editing ? "Editing" : "Creating"}
+              </span>
             </div>
-            <div className="stat-chip surface-chip animate-slide-up" style={{ animationDelay: '140ms' }}>
+            <div
+              className="stat-chip surface-chip animate-slide-up"
+              style={{ animationDelay: "140ms" }}
+            >
               <span className="chip-label">Variant</span>
-              <span className="chip-value">{isVariant ? 'Enabled' : 'Standard'}</span>
+              <span className="chip-value">
+                {isVariant ? "Enabled" : "Standard"}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="container-lg">
-        <div className="card shadow-sm themed-card animate-slide-up form-shell" style={{ animationDelay: '200ms' }}>
+        <div
+          className="card shadow-sm themed-card animate-slide-up form-shell"
+          style={{ animationDelay: "200ms" }}
+        >
           <div className="card-body">
             <div className="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
               <div className="d-flex align-items-center gap-3">
-                <label htmlFor="isVariant" style={{ margin: 0, cursor: editing && Boolean(existing?.parentProductId) ? 'not-allowed' : 'pointer' }}>
+                <label
+                  htmlFor="isVariant"
+                  style={{
+                    margin: 0,
+                    cursor:
+                      editing && Boolean(existing?.parentProductId)
+                        ? "not-allowed"
+                        : "pointer",
+                  }}
+                >
                   {editing && existing?.parentProductId
-                    ? 'This is a variant (locked)'
-                    : 'Create as variant of existing product'}
+                    ? "This is a variant (locked)"
+                    : "Create as variant of existing product"}
                 </label>
                 <div className="checkbox-wrapper-8">
                   <input
@@ -364,31 +424,40 @@ const ProductForm: React.FC = () => {
                       if (!editing || !existing?.parentProductId) {
                         setIsVariant(e.target.checked);
                         if (!e.target.checked) {
-                          setParentProductId('');
-                          setParentProductSearch('');
+                          setParentProductId("");
+                          setParentProductSearch("");
                         }
                       }
                     }}
                   />
-                  <label className="tgl-btn" data-tg-off="OFF" data-tg-on="ON" htmlFor="isVariant"></label>
+                  <label
+                    className="tgl-btn"
+                    data-tg-off="OFF"
+                    data-tg-on="ON"
+                    htmlFor="isVariant"
+                  ></label>
                 </div>
               </div>
               <div className="badge bg-light text-dark px-3 py-2 shadow-sm">
-                {isVariant ? 'Variant mode on' : 'Standard product'}
+                {isVariant ? "Variant mode on" : "Standard product"}
               </div>
             </div>
 
             {isVariant && (
               <div className="mb-4">
-                <label className="form-label fw-semibold">Select Parent Product</label>
+                <label className="form-label fw-semibold">
+                  Select Parent Product
+                </label>
                 <div className="position-relative">
                   <input
-                    className={`form-control glow-control${errors.parentProduct ? ' is-invalid' : ''}`}
+                    className={`form-control glow-control${
+                      errors.parentProduct ? " is-invalid" : ""
+                    }`}
                     type="text"
                     placeholder="Search for product name or SKU..."
                     value={parentProductSearch}
                     onChange={(e) => setParentProductSearch(e.target.value)}
-                    onFocus={() => setParentProductSearch('')}
+                    onFocus={() => setParentProductSearch("")}
                   />
                   {parentProductSearch && filteredProducts.length > 0 && (
                     <div className="list-group position-absolute w-100 shadow-lg variant-suggestions scroll-shadow">
@@ -400,127 +469,181 @@ const ProductForm: React.FC = () => {
                           onClick={() => handleParentProductSelect(p.id)}
                         >
                           <div className="fw-semibold">{p.name}</div>
-                          <small className="text-muted">{p.sku} | {p.category}</small>
+                          <small className="text-muted">
+                            {p.sku} | {p.category}
+                          </small>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
-                {errors.parentProduct && <div className="invalid-feedback d-block">{errors.parentProduct}</div>}
+                {errors.parentProduct && (
+                  <div className="invalid-feedback d-block">
+                    {errors.parentProduct}
+                  </div>
+                )}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="row g-3 form-grid" noValidate>
+            <form
+              onSubmit={handleSubmit}
+              className="row g-3 form-grid"
+              noValidate
+            >
               <div className="col-md-6">
                 <label className="form-label">
-                  Product Name <span style={{ color: 'red' }}>*</span>
+                  Product Name <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  className={`form-control glow-control${errors.name ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.name ? " is-invalid" : ""
+                  }`}
                   name="name"
                   value={form.name}
                   onChange={handleChange}
                   required
                   disabled={isVariant && Boolean(parentProductId)}
-                  placeholder={isVariant && !parentProductId ? 'Select parent product first' : ''}
+                  placeholder={
+                    isVariant && !parentProductId
+                      ? "Select parent product first"
+                      : ""
+                  }
                 />
-                {errors.name && <div className="invalid-feedback d-block">{errors.name}</div>}
+                {errors.name && (
+                  <div className="invalid-feedback d-block">{errors.name}</div>
+                )}
               </div>
               <div className="col-md-6">
                 <label className="form-label">
-                  Category <span style={{ color: 'red' }}>*</span>
+                  Category <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  className={`form-control glow-control${errors.category ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.category ? " is-invalid" : ""
+                  }`}
                   name="category"
                   value={form.category}
                   onChange={handleChange}
                   required
                   disabled={isVariant && Boolean(parentProductId)}
                 />
-                {errors.category && <div className="invalid-feedback d-block">{errors.category}</div>}
+                {errors.category && (
+                  <div className="invalid-feedback d-block">
+                    {errors.category}
+                  </div>
+                )}
               </div>
               <div className="col-md-6">
                 <label className="form-label">
-                  SKU / Product Code <span style={{ color: 'red' }}>*</span>
+                  SKU / Product Code <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  className={`form-control glow-control${errors.sku ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.sku ? " is-invalid" : ""
+                  }`}
                   name="sku"
                   value={form.sku}
                   onChange={handleChange}
                   required
                 />
-                {errors.sku && <div className="invalid-feedback d-block">{errors.sku}</div>}
+                {errors.sku && (
+                  <div className="invalid-feedback d-block">{errors.sku}</div>
+                )}
               </div>
               <div className="col-md-6">
                 <label className="form-label">
-                  Unit <span style={{ color: 'red' }}>*</span>
+                  Unit <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  className={`form-control glow-control${errors.unit ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.unit ? " is-invalid" : ""
+                  }`}
                   name="unit"
                   value={form.unit}
                   onChange={handleChange}
                   required
                 />
-                {errors.unit && <div className="invalid-feedback d-block">{errors.unit}</div>}
+                {errors.unit && (
+                  <div className="invalid-feedback d-block">{errors.unit}</div>
+                )}
               </div>
               <div className="col-md-6">
                 <label className="form-label">
-                  Purchase Price <span style={{ color: 'red' }}>*</span>
+                  Purchase Price <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  className={`form-control glow-control${errors.purchasePrice ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.purchasePrice ? " is-invalid" : ""
+                  }`}
                   name="purchasePrice"
                   value={form.purchasePrice}
                   onChange={handleChange}
                   type="number"
                   required
                 />
-                {errors.purchasePrice && <div className="invalid-feedback d-block">{errors.purchasePrice}</div>}
+                {errors.purchasePrice && (
+                  <div className="invalid-feedback d-block">
+                    {errors.purchasePrice}
+                  </div>
+                )}
               </div>
               <div className="col-md-6">
                 <label className="form-label">
-                  Selling Price <span style={{ color: 'red' }}>*</span>
+                  Selling Price <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  className={`form-control glow-control${errors.sellingPrice ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.sellingPrice ? " is-invalid" : ""
+                  }`}
                   name="sellingPrice"
                   value={form.sellingPrice}
                   onChange={handleChange}
                   type="number"
                   required
                 />
-                {errors.sellingPrice && <div className="invalid-feedback d-block">{errors.sellingPrice}</div>}
+                {errors.sellingPrice && (
+                  <div className="invalid-feedback d-block">
+                    {errors.sellingPrice}
+                  </div>
+                )}
               </div>
               <div className="col-md-6">
                 <label className="form-label">
-                  Tax Rate (%) <span style={{ color: 'red' }}>*</span>
+                  Tax Rate (%) <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  className={`form-control glow-control${errors.taxRate ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.taxRate ? " is-invalid" : ""
+                  }`}
                   name="taxRate"
                   value={form.taxRate}
                   onChange={handleChange}
                   type="number"
                   required
                 />
-                {errors.taxRate && <div className="invalid-feedback d-block">{errors.taxRate}</div>}
+                {errors.taxRate && (
+                  <div className="invalid-feedback d-block">
+                    {errors.taxRate}
+                  </div>
+                )}
               </div>
               <div className="col-md-6">
                 <label className="form-label">
-                  Stock Quantity <span style={{ color: 'red' }}>*</span>
+                  Stock Quantity <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  className={`form-control glow-control${errors.stock ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.stock ? " is-invalid" : ""
+                  }`}
                   name="stock"
                   value={form.stock}
                   onChange={handleChange}
                   type="number"
                   required
                 />
-                {errors.stock && <div className="invalid-feedback d-block">{errors.stock}</div>}
+                {errors.stock && (
+                  <div className="invalid-feedback d-block">{errors.stock}</div>
+                )}
               </div>
 
               {isVariant && (
@@ -560,12 +683,28 @@ const ProductForm: React.FC = () => {
               </div>
               <div className="col-md-6">
                 <label className="form-label">Barcode / QR Code</label>
-                <input
-                  className="form-control glow-control"
-                  name="barcode"
-                  value={form.barcode}
-                  onChange={handleChange}
-                />
+                <div className="input-group">
+                  <input
+                    className="form-control glow-control"
+                    name="barcode"
+                    value={form.barcode}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setBarcodePreview(null);
+                    }}
+                    placeholder="Leave empty to auto-generate"
+                  />
+                  {editing && existing?.barcodeImage && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={() => setBarcodePreview(existing.barcodeImage || null)}
+                      title="View Barcode"
+                    >
+                      <i className="bi bi-upc-scan"></i> View
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="col-md-6">
                 <label className="form-label">Brand</label>
@@ -601,20 +740,31 @@ const ProductForm: React.FC = () => {
               </div>
               <div className="col-md-6">
                 <label className="form-label">
-                  Discount {form.discountType === 'flat' ? '(₹ per item)' : '(%)'}
+                  Discount{" "}
+                  {form.discountType === "flat" ? "(₹ per item)" : "(%)"}
                 </label>
                 <input
-                  className={`form-control glow-control${errors.discount ? ' is-invalid' : ''}`}
+                  className={`form-control glow-control${
+                    errors.discount ? " is-invalid" : ""
+                  }`}
                   name="discount"
                   value={form.discount}
                   onChange={handleChange}
                   type="number"
                   min={0}
-                  max={form.discountType === 'percentage' ? 100 : undefined}
+                  max={form.discountType === "percentage" ? 100 : undefined}
                   step="0.01"
-                  placeholder={form.discountType === 'flat' ? 'Enter flat discount amount' : 'Enter percentage'}
+                  placeholder={
+                    form.discountType === "flat"
+                      ? "Enter flat discount amount"
+                      : "Enter percentage"
+                  }
                 />
-                {errors.discount && <div className="invalid-feedback d-block">{errors.discount}</div>}
+                {errors.discount && (
+                  <div className="invalid-feedback d-block">
+                    {errors.discount}
+                  </div>
+                )}
               </div>
               <div className="col-md-6">
                 <label className="form-label">Supplier / Vendor Name</label>
@@ -675,7 +825,9 @@ const ProductForm: React.FC = () => {
                 />
               </div>
               <div className="col-md-6">
-                <label className="form-label">Storage Location / Shelf / Rack No.</label>
+                <label className="form-label">
+                  Storage Location / Shelf / Rack No.
+                </label>
                 <input
                   className="form-control glow-control"
                   name="location"
@@ -725,9 +877,17 @@ const ProductForm: React.FC = () => {
                       checked={form.isFavorite}
                       onChange={handleChange}
                     />
-                    <label htmlFor="isFavorite" className={`check-box ${form.isFavorite ? 'checked' : ''}`}></label>
+                    <label
+                      htmlFor="isFavorite"
+                      className={`check-box ${
+                        form.isFavorite ? "checked" : ""
+                      }`}
+                    ></label>
                   </div>
-                  <label htmlFor="isFavorite" style={{ cursor: 'pointer', margin: 0 }}>
+                  <label
+                    htmlFor="isFavorite"
+                    style={{ cursor: "pointer", margin: 0 }}
+                  >
                     Mark as favorite item
                   </label>
                 </div>
@@ -740,9 +900,17 @@ const ProductForm: React.FC = () => {
                       checked={form.isBestSeller}
                       onChange={handleChange}
                     />
-                    <label htmlFor="isBestSeller" className={`check-box ${form.isBestSeller ? 'checked' : ''}`}></label>
+                    <label
+                      htmlFor="isBestSeller"
+                      className={`check-box ${
+                        form.isBestSeller ? "checked" : ""
+                      }`}
+                    ></label>
                   </div>
-                  <label htmlFor="isBestSeller" style={{ cursor: 'pointer', margin: 0 }}>
+                  <label
+                    htmlFor="isBestSeller"
+                    style={{ cursor: "pointer", margin: 0 }}
+                  >
                     Flag as best-selling
                   </label>
                 </div>
@@ -758,25 +926,72 @@ const ProductForm: React.FC = () => {
                 <button
                   className="btn btn-outline-secondary"
                   type="button"
-                  onClick={() => navigate('/products')}
+                  onClick={() => navigate("/products")}
                   disabled={submitting}
                 >
                   Cancel
                 </button>
-                <button className="btn btn-success shadow-sm" type="submit" disabled={submitting}>
+                <button
+                  className="btn btn-success shadow-sm"
+                  type="submit"
+                  disabled={submitting}
+                >
                   {submitting
-                    ? 'Saving...'
+                    ? "Saving..."
                     : editing
-                    ? 'Update Product'
+                    ? "Update Product"
                     : isVariant
-                    ? 'Add Variant'
-                    : 'Add Product'}
+                    ? "Add Variant"
+                    : "Add Product"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Barcode Preview Modal */}
+      {barcodePreview && (
+        <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="bi bi-upc-scan me-2"></i>
+                  Barcode Preview
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setBarcodePreview(null)}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body text-center p-4">
+                <div className="border rounded p-3 bg-white">
+                  <img
+                    src={barcodePreview}
+                    alt="Barcode"
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                  />
+                </div>
+                <div className="mt-3">
+                  <code className="text-dark fs-5">{form.barcode || existing?.barcode || 'N/A'}</code>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setBarcodePreview(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -29,6 +29,7 @@ const COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'
 
 const Reports: React.FC = () => {
     const sales = useAppSelector(s => s.reports.sales)
+    const token = useAppSelector(s => s.auth.token) || undefined
     const dispatch = useAppDispatch()
     const [exportType, setExportType] = React.useState<'excel' | 'pdf' | 'csv'>('excel')
     const [loading, setLoading] = useState(true)
@@ -41,7 +42,7 @@ const Reports: React.FC = () => {
             setLoading(true)
             setError(null)
             setHasApiError(false)
-            const data = await getSalesReport()
+            const data = await getSalesReport({ token })
             
             // Validate API response
             if (!data || !Array.isArray(data)) {

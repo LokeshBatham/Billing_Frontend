@@ -68,6 +68,28 @@ class ApiError extends Error {
   }
 }
 
+/**
+ * @param {string} path
+ */
+const handleUnauthorized = (path) => {
+  try {
+    if (typeof path === 'string' && (path.startsWith('/api/auth') || path.startsWith('/api/register'))) {
+      return;
+    }
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem('auth');
+    } catch (e) {
+      // ignore
+    }
+    if (window.location && window.location.pathname !== '/') {
+      window.location.assign('/');
+    }
+  } catch (e) {
+    // ignore
+  }
+};
+
 // Using axios responses, parsing is handled by axios (response.data)
 
 /**
@@ -82,14 +104,22 @@ const makeUrl = (path) => {
 
 /**
  * @param {string} path
- * @param {{ token?: string; body?: any; method?: string; headers?: HeadersInit; [key: string]: any }} options
+ * @param {{ token?: string; body?: any; method?: string; headers?: any; [key: string]: any }} options
  */
 const request = async (path, options = {}) => {
   const { token, body, headers = {}, method = 'GET', ...rest } = options;
 
-  const finalHeaders = {
-    ...headers,
-  };
+  /** @type {any} */
+  let finalHeaders = {};
+  if (headers && typeof headers === 'object') {
+    if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+      finalHeaders = Object.fromEntries(headers.entries());
+    } else if (Array.isArray(headers)) {
+      finalHeaders = Object.fromEntries(headers);
+    } else {
+      finalHeaders = { ...headers };
+    }
+  }
 
   if (body !== undefined && body !== null && !finalHeaders['Content-Type']) {
     finalHeaders['Content-Type'] = 'application/json';
@@ -114,23 +144,33 @@ const request = async (path, options = {}) => {
 
     return payload;
   } catch (err) {
+    /** @type {any} */
+    const error = err;
     // Normalize axios error
-    if (err.response) {
-      const status = err.response.status;
-      const payload = err.response.data;
-      const message = typeof payload?.error === 'string' ? payload.error : err.message || `Request failed with status ${status}`;
+    if (error && error.response) {
+      const status = error.response.status;
+      const payload = error.response.data;
+      if (status === 401) {
+        handleUnauthorized(path);
+      }
+      const message = typeof payload?.error === 'string' ? payload.error : error.message || `Request failed with status ${status}`;
       throw new ApiError(message, status, payload);
     }
-    throw new ApiError(err.message || 'Network request failed', 0, { originalError: err });
+    throw new ApiError((error && error.message) || 'Network request failed', 0, { originalError: error });
   }
 };
 
 /**
- * @param {{ email: string; password: string }} credentials
+ * @param {{ companyName: string; email: string; password: string }} credentials
  */
 export const login = async (credentials) => {
+  const companyName = String(credentials.companyName || '').trim();
   const email = String(credentials.email || '').trim();
   const password = String(credentials.password || '');
+
+  if (!companyName) {
+    throw new ApiError('Company name is required', 400);
+  }
 
   if (!email) {
     throw new ApiError('Email is required', 400);
@@ -147,6 +187,7 @@ export const login = async (credentials) => {
   return request('/api/auth/login', {
     method: 'POST',
     body: {
+      companyName,
       email,
       password,
     },
@@ -291,6 +332,69 @@ export const getSalesReport = async (options) => {
     method: 'GET',
     ...(options || {}),
   });
+};
+
+/**
+ * @param {string} barcode
+ * @param {{ token?: string; [key: string]: any }} [options]
+ */
+export const getProductByBarcode = async (barcode, options) => {
+  return request(`/api/products/barcode/${encodeURIComponent(barcode)}`, {
+    method: 'GET',
+    ...(options || {}),
+  });
+};
+
+/**
+ * Download bulk upload template
+ * @param {{ token?: string }} [options]
+ */
+export const downloadBulkTemplate = async (options) => {
+  const { token } = options || {};
+  const url = makeUrl('/api/products/bulk/template');
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new ApiError('Failed to download template', response.status);
+  }
+
+  return response.blob();
+};
+
+/**
+ * Bulk upload products from Excel file
+ * @param {File} file - Excel file to upload
+ * @param {'create' | 'update' | 'upsert'} [operation='upsert'] - Operation type
+ * @param {{ token?: string }} [options]
+ */
+export const bulkUploadProducts = async (file, operation = 'upsert', options) => {
+  const { token } = options || {};
+  const url = makeUrl(`/api/products/bulk/upload?operation=${operation}`);
+  
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new ApiError(data.message || data.error || 'Bulk upload failed', response.status, data);
+  }
+
+  return data;
 };
 
 export { ApiError };
