@@ -42,7 +42,7 @@ const Register: React.FC = () => {
       await apiRegister({ name, contact: contactDigits, email: emailVal, companyName, state: stateVal, city, password });
       toast.success('Registration successful');
       setName(''); setContact(''); setEmail(''); setCompanyName(''); setStateVal(''); setCity(''); setPassword('');
-    } catch (err) {
+    } catch (err: any) {
       const msg = err?.message || 'Registration failed';
       toast.error(msg);
     } finally {
