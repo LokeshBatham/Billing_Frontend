@@ -23,6 +23,16 @@ export declare function login(credentials: {
   password: string;
 }): Promise<LoginResponse>;
 
+export declare function register(payload: {
+  name: string;
+  contact: string;
+  email: string;
+  companyName?: string;
+  state?: string;
+  city?: string;
+  password?: string;
+}): Promise<{ token?: string; user?: any; [key: string]: any }>;
+
 export declare function getProducts(
   options?: RequestInit & { token?: string },
 ): Promise<Product[]>;
