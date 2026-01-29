@@ -105,7 +105,7 @@ export const login = async (credentials) => {
     throw new ApiError('Password must be at least 6 characters long', 400);
   }
 
-  return request('/api/auth/login', {
+  return request('/api/login', {
     method: 'POST',
     body: {
       email,
