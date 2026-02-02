@@ -31,7 +31,7 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id?: string;
-  handler: () => void;
+  handler: (response: any) => void | Promise<void>;
   prefill: {
     name: string;
     email: string;
@@ -61,7 +61,6 @@ declare global {
 
 const Billing: React.FC = () => {
   const dispatch = useDispatch();
-  const nav = useNavigate();
   const cart = useSelector((state: RootState) => state.cart);
   const products = useSelector((state: RootState) => state.products.items);
   const customers = useAppSelector((state: RootState) => state.customers.items);
