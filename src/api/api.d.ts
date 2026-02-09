@@ -151,3 +151,12 @@ export declare function bulkUploadProducts(
   operation?: 'create' | 'update' | 'upsert',
   options?: { token?: string },
 ): Promise<BulkUploadResult>;
+
+export declare function createInvoice(
+  payload: any,
+  options?: { token?: string },
+): Promise<any>;
+
+export declare function getBillingHistory(
+  options?: { token?: string },
+): Promise<any[]>;

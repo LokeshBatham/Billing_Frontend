@@ -18,7 +18,7 @@ import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { logout } from "../slices/authSlice";
 import { setSales } from "../slices/reportsSlice";
 import { fetchProducts } from "../slices/productsSlice";
-import { getDashboard, ApiError } from "../api/api";
+import { getDashboard, ApiError } from "../api/api.js";
 import ApiErrorFallback from "../components/ApiErrorFallback";
 
 const paymentModes = ["All", "Cash", "UPI", "Card", "Wallet"];

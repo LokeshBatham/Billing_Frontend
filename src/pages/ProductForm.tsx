@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { addProduct, updateProduct } from "../slices/productsSlice";
 import { useNavigate, useParams } from "react-router-dom";
-import { ApiError } from "../api/api";
+import { ApiError } from "../api/api.js";
 
 const initialForm = {
   name: "",

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppSelector } from '../store/hooks';
 import type { RootState } from '../store/store';
-import { getBillingHistory, ApiError } from '../api/api';
+import { getBillingHistory, ApiError } from '../api/api.js';
 import { toast } from '../utils/toast';
 
 interface BillingHistoryItem {
@@ -141,10 +141,22 @@ const BillingHistory: React.FC = () => {
                   {paginatedHistory.map((entry) => (
                     <tr key={entry.id} className="align-middle">
                       <td>
-                        <code className="small text-primary">{entry.id.substring(0, 12)}...</code>
+                        <code
+                          className="small text-primary"
+                          title={entry.id}
+                          aria-label={entry.id}
+                        >
+                          {entry.id.substring(0, 12)}...
+                        </code>
                       </td>
                       <td>
-                        <code className="small">{entry.invoiceId.substring(0, 16)}...</code>
+                        <code
+                          className="small"
+                          title={entry.invoiceId}
+                          aria-label={entry.invoiceId}
+                        >
+                          {entry.invoiceId.substring(0, 16)}...
+                        </code>
                       </td>
                       <td>
                         <span className="badge bg-light text-dark">

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+// removed unused `useNavigate` import
 import { Modal, Button } from "react-bootstrap";
 import { toast } from "../utils/toast";
 import {
@@ -21,7 +21,7 @@ import {
   getProductByBarcode,
   createInvoice,
   ApiError,
-} from "../api/api";
+} from "../api/api.js";
 import ApiErrorFallback from "../components/ApiErrorFallback";
 
 interface RazorpayOptions {
@@ -31,7 +31,7 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id?: string;
-  handler: () => void;
+  handler: (...args: any[]) => void | Promise<void>;
   prefill: {
     name: string;
     email: string;
@@ -61,7 +61,6 @@ declare global {
 
 const Billing: React.FC = () => {
   const dispatch = useDispatch();
-  const nav = useNavigate();
   const cart = useSelector((state: RootState) => state.cart);
   const products = useSelector((state: RootState) => state.products.items);
   const customers = useAppSelector((state: RootState) => state.customers.items);
