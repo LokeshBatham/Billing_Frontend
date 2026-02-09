@@ -4,7 +4,7 @@ import { removeCustomer, addCustomer, updateCustomer, setCustomers } from "../sl
 import { Modal, Button, Card } from "react-bootstrap";
 import { toast } from "../utils/toast";
 import type { Customer } from "../types";
-import { getCustomers, createCustomer, updateCustomer as updateCustomerAPI, deleteCustomer, ApiError } from "../api/api";
+import { getCustomers, createCustomer, updateCustomer as updateCustomerAPI, deleteCustomer, ApiError } from "../api/api.js";
 import ApiErrorFallback from "../components/ApiErrorFallback";
 
 const placeholder = "—";

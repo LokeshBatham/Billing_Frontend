@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+// removed unused `useNavigate` import
 import { Modal, Button } from "react-bootstrap";
 import { toast } from "../utils/toast";
 import {
@@ -21,7 +21,7 @@ import {
   getProductByBarcode,
   createInvoice,
   ApiError,
-} from "../api/api";
+} from "../api/api.js";
 import ApiErrorFallback from "../components/ApiErrorFallback";
 
 interface RazorpayOptions {
@@ -31,7 +31,7 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id?: string;
-  handler: (response: any) => void | Promise<void>;
+  handler: (...args: any[]) => void | Promise<void>;
   prefill: {
     name: string;
     email: string;

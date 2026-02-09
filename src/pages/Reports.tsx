@@ -5,25 +5,8 @@ import { Card, Button, Row, Col } from 'react-bootstrap'
 import { getSalesReport, ApiError } from '../api/api'
 import { toast } from '../utils/toast'
 import ApiErrorFallback from '../components/ApiErrorFallback'
-import {
-    BarChart,
-    Bar,
-    LineChart,
-    Line,
-    AreaChart,
-    Area,
-    PieChart,
-    Pie,
-    Cell,
-    XAxis,
-    YAxis,
-    Tooltip,
-    CartesianGrid,
-    ResponsiveContainer,
-} from 'recharts'
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import React, { Suspense } from 'react'
+const ReportsCharts = React.lazy(() => import('./ReportsCharts'))
 
 const COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14']
 
@@ -179,10 +162,11 @@ const Reports: React.FC = () => {
         }))
     }, [sales])
 
-    const handleExport = () => {
+    const handleExport = async () => {
         if (exportType === 'excel' || exportType === 'csv') {
+            const XLSX = await import('xlsx')
             const ws = XLSX.utils.json_to_sheet(
-                sales.map(s => ({
+                sales.map((s: any) => ({
                     Invoice: s.id,
                     Date: new Date(s.date).toLocaleString(),
                     Customer: s.customer?.name || 'N/A',
@@ -201,11 +185,14 @@ const Reports: React.FC = () => {
                 XLSX.writeFile(wb, 'sales-report.csv')
             }
         } else if (exportType === 'pdf') {
-            const doc = new jsPDF()
+            const jsPDFModule = await import('jspdf')
+            const jsPDF = jsPDFModule.default || jsPDFModule
+            await import('jspdf-autotable')
+            const doc: any = new jsPDF()
             doc.text('Sales Report', 14, 15)
             ;(doc as any).autoTable({
                 head: [['Invoice', 'Date', 'Customer', 'Total', 'Payment']],
-                body: sales.map(s => [
+                body: sales.map((s: any) => [
                     s.id,
                     new Date(s.date).toLocaleString(),
                     s.customer?.name || 'N/A',
@@ -281,6 +268,19 @@ const Reports: React.FC = () => {
                         <i className="bi bi-download me-2"></i>
                         Export
                     </Button>
+                </div>
+                </div>
+
+                <div className="col-12">
+                    <Suspense fallback={<div style={{ minHeight: 240 }}><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
+                        <ReportsCharts
+                            dailySalesData={dailySalesData}
+                            monthlySalesData={monthlySalesData}
+                            paymentMethodData={paymentMethodData}
+                            weeklyTrendData={weeklyTrendData}
+                            renderTooltip={renderTooltip}
+                        />
+                    </Suspense>
                 </div>
             </div>
 
