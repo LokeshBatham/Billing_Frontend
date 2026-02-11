@@ -1,4 +1,3 @@
-import React from 'react'
 import {
     BarChart,
     Bar,
@@ -101,7 +100,7 @@ export default function ReportsCharts({
                                 <ResponsiveContainer>
                                     <PieChart>
                                         <Pie data={paymentMethodData} dataKey="value" nameKey="name" outerRadius={80} label>
-                                            {paymentMethodData.map((entry: any, index: number) => (
+                                            {paymentMethodData.map((_entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
