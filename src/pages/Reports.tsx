@@ -268,7 +268,6 @@ const Reports: React.FC = () => {
                         Export
                     </Button>
                 </div>
-                </div>
 
                 <div className="col-12">
                     <Suspense fallback={<div style={{ minHeight: 240 }}><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
