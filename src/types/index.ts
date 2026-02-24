@@ -86,3 +86,11 @@ export interface Invoice {
   refundStatus?: 'none' | 'partial' | 'full'
   status?: string
 }
+
+// Enhanced Invoice type for reports with profit calculations
+export interface EnhancedInvoice extends Invoice {
+  refund: number
+  netTotal: number
+  profit: number
+  status: 'completed' | 'refunded' | 'partial_refund' | 'cancelled'
+}
