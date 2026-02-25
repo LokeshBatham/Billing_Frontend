@@ -75,6 +75,10 @@ const Dashboard: React.FC = () => {
             customer: (sale.customer && typeof sale.customer === 'object' && 'id' in sale.customer && 'name' in sale.customer) 
               ? sale.customer as { id: string; name: string; phone?: string; email?: string }
               : null,
+            refund: 0,
+            netTotal: sale.total || 0,
+            profit: 0,
+            status: 'completed' as const,
           }));
           dispatch(setSales(mappedSales));
           console.log('[Dashboard] Sales updated in Redux:', mappedSales.length, 'items');

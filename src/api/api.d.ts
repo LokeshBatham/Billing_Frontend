@@ -26,6 +26,7 @@ export declare function login(credentials: {
   companyName: string;
   email: string;
   password: string;
+  loginAsStaff?: boolean;
 }): Promise<LoginResponse>;
 
 export declare function register(payload: {
@@ -211,3 +212,8 @@ export declare function createInvoice(
 export declare function getBillingHistory(
   options?: { token?: string },
 ): Promise<any[]>;
+
+export declare function createRefund(
+  payload: any,
+  options?: { token?: string },
+): Promise<any>;
