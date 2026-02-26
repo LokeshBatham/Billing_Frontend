@@ -100,7 +100,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, invoice, onR
             // BillingHistory objects have 'id' field (UUID), not 'invoiceId'
             // Use invoice.id which is the BillingHistory record ID
             const invoiceIdToUse = invoice?.id;
-            
+
             if (!invoiceIdToUse) {
                 toast.error('Invalid invoice: missing invoice ID');
                 return;
@@ -124,8 +124,8 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, invoice, onR
     const refundableBalance = (invoice.total || 0) - (invoice.refundTotal || 0);
 
     return (
-        <div 
-            className="modal fade show d-block" 
+        <div
+            className="modal fade show d-block"
             style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
             tabIndex={-1}
             role="dialog"

@@ -1271,8 +1271,8 @@ const Billing: React.FC = () => {
             >
               <i
                 className={`bi ${modalMode === "create"
-                    ? "bi-check-circle-fill"
-                    : "bi-person-plus"
+                  ? "bi-check-circle-fill"
+                  : "bi-person-plus"
                   } me-2`}
               ></i>
               New Customer

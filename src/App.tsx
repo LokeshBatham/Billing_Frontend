@@ -37,33 +37,26 @@ type SidebarContextType = {
 
 export const SidebarContext = React.createContext<SidebarContextType>({
   sidebarClass: "",
-  setSidebarClass: () => {},
+  setSidebarClass: () => { },
 });
 
 const App: React.FC = () => {
   const [sidebarClass, setSidebarClass] = useState("collapsed");
   const location = useLocation();
-  const isLoginPage = location.pathname === "/";
+  const publicRoutes = ["/", "/notfound"];
+  const isPublicPage = publicRoutes.includes(location.pathname.toLowerCase());
 
   console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
 
   return (
     <SidebarContext.Provider value={{ sidebarClass, setSidebarClass }}>
       <div className="d-flex flex-column" style={{ minHeight: "100vh" }}>
-        {!isLoginPage && <Header />}
+        {!isPublicPage && <Header />}
 
         <div className="d-flex flex-grow-1">
-          {!isLoginPage && <SidebarWithContext />}
+          {!isPublicPage && <SidebarWithContext />}
 
-          <div
-            className={`flex-grow-1 d-flex flex-column ${
-              !isLoginPage
-                ? `content-with-sidebar${
-                    sidebarClass === "collapsed" ? " collapsed" : ""
-                  }`
-                : ""
-            }`}
-          >
+          <div className={`flex-grow-1 d-flex flex-column ${!isPublicPage ? `content-with-sidebar${sidebarClass === "collapsed" ? " collapsed" : ""}` : ""}`}>
             <div className="flex-grow-1">
               {/* =======================
                  ROUTES WITH SUSPENSE
@@ -192,7 +185,7 @@ const App: React.FC = () => {
               </Suspense>
             </div>
 
-            {!isLoginPage && <Footer />}
+            {!isPublicPage && <Footer />}
           </div>
         </div>
       </div>
