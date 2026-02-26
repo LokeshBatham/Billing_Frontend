@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, createContext, useContext } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { ToastContainer } from "./utils/toast";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -35,7 +35,7 @@ type SidebarContextType = {
   setSidebarClass: (c: string) => void;
 };
 
-export const SidebarContext = React.createContext<SidebarContextType>({
+export const SidebarContext = createContext<SidebarContextType>({
   sidebarClass: "",
   setSidebarClass: () => { },
 });
@@ -202,7 +202,7 @@ const App: React.FC = () => {
    SIDEBAR WRAPPER
 ======================= */
 const SidebarWithContext: React.FC = () => {
-  const { setSidebarClass } = React.useContext(SidebarContext);
+  const { setSidebarClass } = useContext(SidebarContext);
   return <Sidebar onSidebarClassChange={setSidebarClass} />;
 };
 
