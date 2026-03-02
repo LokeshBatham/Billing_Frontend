@@ -112,7 +112,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, invoice, onR
             console.log('[RefundModal] Invoice object:', invoice);
             console.log('[RefundModal] Refund items:', items);
 
-            const result = await dispatch(createRefund({
+            await dispatch(createRefund({
                 invoiceId: invoiceIdToUse,
                 items,
                 reason: reason.trim(),

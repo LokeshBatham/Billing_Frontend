@@ -105,7 +105,7 @@ const Billing: React.FC = () => {
     (state: RootState) => state.settings.paymentGatewayEnabled
   );
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'cash' | 'card' | 'online' | null>(null);
+  const [_selectedPaymentMethod, setSelectedPaymentMethod] = useState<'cash' | 'card' | 'online' | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -427,6 +427,10 @@ const Billing: React.FC = () => {
       paymentMethod,
       paymentStatus: 'paid',
       transactionId: `TXN-${Date.now()}`,
+      refund: 0,
+      netTotal: total,
+      profit: 0,
+      status: 'completed' as const,
     };
 
     // Persist invoice to backend so DB stock is decremented there.
@@ -481,6 +485,10 @@ const Billing: React.FC = () => {
       tax,
       total,
       customer: selectedCustomer || null,
+      refund: 0,
+      netTotal: total,
+      profit: 0,
+      status: 'completed' as const,
     };
 
     // Get settings from Redux
