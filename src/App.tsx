@@ -38,7 +38,7 @@ type SidebarContextType = {
 
 export const SidebarContext = React.createContext<SidebarContextType>({
   sidebarClass: "",
-  setSidebarClass: () => {},
+  setSidebarClass: () => { },
 });
 
 const App: React.FC = () => {
@@ -57,13 +57,11 @@ const App: React.FC = () => {
           {!isLoginPage && <SidebarWithContext />}
 
           <div
-            className={`flex-grow-1 d-flex flex-column ${
-              !isLoginPage
-                ? `content-with-sidebar${
-                    sidebarClass === "collapsed" ? " collapsed" : ""
-                  }`
+            className={`flex-grow-1 d-flex flex-column ${!isLoginPage
+                ? `content-with-sidebar${sidebarClass === "collapsed" ? " collapsed" : ""
+                }`
                 : ""
-            }`}
+              }`}
           >
             <div className="flex-grow-1">
               {/* =======================
