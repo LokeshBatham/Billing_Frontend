@@ -10,6 +10,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Inject API URL at runtime for production deployments
+      // This allows the backend URL to work on any Vercel deployment without rebuilding
+      window.__APP_CONFIG = {
+        VITE_API_URL: 'https://billing-backend-1-zds2.onrender.com',
+        VITE_RAZORPAY_KEY_ID: 'rzp_test_1DP5mmOlF5G5ag'
+      };
+      console.log('[App Config Injected]', window.__APP_CONFIG);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
